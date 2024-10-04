@@ -14,6 +14,7 @@ from flask import Flask,request
 from flask.views import MethodView
 from flask_cors import CORS
 from .models.dto.Input import InputRsa,InputDiff
+from .models.dto.Output import OutputDto
 
 
 
@@ -25,19 +26,22 @@ def web_composition_root():
 
     # observers
     output_h = OutputHandler(handler=EventObservableHandler(State()))
-    input_h = InputHandler(handler=EventObservableHandler(State()))
+    input_h_rsa = InputHandler(handler=EventObservableHandler(State()))
+    input_h_diff = InputHandler(handler=EventObservableHandler(State()))
+
     dto_rsa = InputRsa()
     dto_diff = InputDiff()
     inp_e = InputAPIObserver(dto_rsa) 
     inp_d = InputAPIObserver(dto_diff) 
-    input_h.handler.suscribe(inp_e)
-    input_h.handler.suscribe(inp_d)
+    input_h_rsa.handler.suscribe(inp_e)
+    input_h_diff.handler.suscribe(inp_d)
+    output_h.handler.suscribe(OutputAPIObserver(dto=OutputDto(messages=[])))
 
     # inputs
-    input_rsa = InputAPI.as_view("rsa_i",inp_e,input_h)
+    input_rsa = InputAPI.as_view("rsa_i",inp_e,input_h_rsa,lambda : RSA(input=input_h_rsa,output=output_h) )
     output_rsa = OutputAPIAdapter.as_view("rsa_o",output_h)
 
-    input_diff = InputAPI.as_view("diff_i",inp_d,input_h)
+    input_diff = InputAPI.as_view("diff_i",inp_d,input_h_diff, lambda: DiffHellman(input=input_h_diff,output=output_h))
     output_diff = OutputAPIAdapter.as_view("diff_o",output_h)
     
 
@@ -52,9 +56,14 @@ def web_composition_root():
 
 
     # hex
-    rsa = RSA(input=input_h,output=output_h)
-    diffHellman = DiffHellman(input=input_h,output=output_h)
-    app.run()
+
+    #diffHellman = 
+    #print("HS")
+    #print(input_h_diff.handler.state.value)
+    #print(input_h_rsa.handler.state.value)
+
+
+    app.run(debug=True)
 
 def cli_composition_root():
 
@@ -65,6 +74,7 @@ def cli_composition_root():
     output_h.handler.suscribe(OutputCLIAdapter())
     rsa = RSA(input=input_h,output=output_h)
     diffHellman = DiffHellman(input=input_h,output=output_h)
+    
 if __name__ == "__main__":
     web_composition_root()
     #cli_composition_root()

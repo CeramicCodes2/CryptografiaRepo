@@ -114,6 +114,7 @@ class RSA(Template,Encrypt,Decrypt):
 
 
     def output(self, *args):
+        print(args)
         for idx,x in enumerate(args):
             self._output(str(idx),args)
 

@@ -5,20 +5,21 @@ from flask import request
 from flask.views import MethodView
 class InputAPI(MethodView):
     init_every_request = False
-    def __init__(self,input:Observer,subject:Subject) -> None:
+    def __init__(self,input:Observer,subject:Subject,lazy) -> None:
         Observer.__init__(self)
         MethodView.__init__(self)
         self.input = input 
         self.subject = subject
-        self.RESPONSE = input
+        self.lazy = lazy
     def post(self):
-        self.input.dto.include(**request.json())
+        print(request.json)
+        self.input.dto.include(**request.json)
         self.input.update(self.subject)
-        if not(self.input.dto.isFilled()):
-            return {}
-        self.subject.notify()
+        if self.input.dto.isFilled():
+            self.subject.handler.notify()
+            self.lazy()
         response = self.input.dto.export()
-        self.input.dto.reset()
+        #self.input.dto.reset()
         return jsonify(response)
 class InputAPIObserver(Observer):
     def __init__(self,dto:AbastractField) -> None:

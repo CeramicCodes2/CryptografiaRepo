@@ -11,16 +11,20 @@ class InputRsa(AbastractField):
         self.p = ""
         self.q = ""
         self.e = ""
-        self.auto = {"response":0,"e":0}
+        self.auto = {"response":"","e":0}
         return super().reset()
     def isFilled(self):
-        if all(self.p,self.q,self.e):
+        if all([self.p,self.q,self.auto]) or all([self.p,self.q,self.e]):
             return True
         return False
     def include(self, **kwargs):
         for k,v in kwargs.items():
-            for kk,kv in vars(self).keys():
+            for kk in vars(self).keys():
                 if kk == k:
+                    if k == "auto":
+                        setattr(self,kk,v["response"])
+                        setattr(self,"e",v["e"])
+                        continue
                     setattr(self,kk,v)
                 continue
 @dataclass
